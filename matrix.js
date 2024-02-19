@@ -244,4 +244,4 @@ window.requestAnimationFrame(update);
 
 // debug
 let frames = 0;
-setInterval(debug_info, 1000);
+//setInterval(debug_info, 1000);
