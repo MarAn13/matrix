@@ -4,6 +4,8 @@ let ctx = canvas.getContext("2d");
 let canvas_client_rect = canvas.getBoundingClientRect();
 let font_size = 10;
 let font_type = "serif";
+let max_characters = 50;
+let max_characters_spawn_batch = 5;
 setup_canvas();
 addEventListener("resize", setup_canvas, false);
 // variables
@@ -11,8 +13,6 @@ let characters = [];
 let offscreen_characters = [];
 let create_index = 0;
 let process_index = 0;
-let max_characters = 50;
-const max_characters_spawn_batch = 5;
 const character_trail_size = 15;
 const character_speed = 30;
 const character_color = "rgba(0, 255, 0, 1)";
@@ -47,6 +47,10 @@ const character_set = [
 
 // setup high dpi canvas
 function setup_canvas() {
+  // change max_characters based on window width
+  max_characters = Math.floor(window.innerWidth / (2 * font_size));
+  // change max_characters_spawn_batch based on max_characters
+  max_characters_spawn_batch = Math.ceil(max_characters / 10);
   // resize canvas
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -131,28 +135,6 @@ class Character {
 }
 
 function process_chars() {
-  // spawn chars
-  if (characters.length < max_characters) {
-    const spawn_batch = gen_int(
-      0,
-      Math.min(
-        max_characters_spawn_batch,
-        max_characters - characters.length + 1
-      )
-    );
-    for (let i = 0; i < spawn_batch; ++i) {
-      let char = character_set[gen_int(0, character_set.length)].toUpperCase();
-      characters.push(
-        new Character(
-          gen_int(0, canvas_client_rect.width),
-          0,
-          character_color,
-          character_speed
-        )
-      );
-    }
-  }
-
   // remove offscreen chars
   while (
     offscreen_characters[0] !== undefined &&
@@ -180,6 +162,28 @@ function process_chars() {
   for (let i = 0; i < offscreen_characters.length; ++i) {
     offscreen_characters[i].update();
     offscreen_characters[i].draw(ctx);
+  }
+
+  // spawn chars
+  if (characters.length + offscreen_characters.length < max_characters) {
+    const spawn_batch = gen_int(
+      0,
+      Math.min(
+        max_characters_spawn_batch,
+        max_characters - characters.length - offscreen_characters.length + 1
+      )
+    );
+    for (let i = 0; i < spawn_batch; ++i) {
+      let char = character_set[gen_int(0, character_set.length)].toUpperCase();
+      characters.push(
+        new Character(
+          gen_int(0, canvas_client_rect.width),
+          0,
+          character_color,
+          character_speed
+        )
+      );
+    }
   }
 
   tick = 0;
@@ -212,7 +216,7 @@ function update() {
 // debug stats
 function debug_info() {
   console.log(
-    `[DEBUG]:\n\tLOOP:\n\t\tFPS: ${frames}\n\tCANVAS:\n\t\tN_CHARACTERS: ${
+    `[DEBUG]:\n\tLOOP:\n\t\tFPS: ${frames}\n\tCANVAS:\n\t\tMAX_CHARACTERS: ${max_characters}\n\t\tMAX_CHARACTERS_SPAWN_BATCH: ${max_characters_spawn_batch}\n\t\tN_CHARACTERS: ${
       characters.length + offscreen_characters.length
     }\n\t\tN_ONSCREEN_CHARACTERS: ${
       characters.length
@@ -240,4 +244,4 @@ window.requestAnimationFrame(update);
 
 // debug
 let frames = 0;
-//setInterval(debug_info, 1000);
+setInterval(debug_info, 1000);
